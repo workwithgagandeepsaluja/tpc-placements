@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DIHM Placement Records</title>
     <style>
         :root {
@@ -26,7 +26,49 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding: 3rem 1.5rem;
+            padding: 2rem 1.5rem;
+        }
+
+        /* --- FULL SCREEN LOADER --- */
+        #pageLoader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+        }
+
+        #pageLoader.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
         }
 
         .container {
@@ -36,11 +78,11 @@
 
         header {
             text-align: center;
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
         }
 
         h1 {
-            font-size: clamp(2rem, 4vw, 2.5rem);
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
             font-weight: 700;
             letter-spacing: -0.02em;
             margin-bottom: 0.5rem;
@@ -48,15 +90,15 @@
 
         p.subtitle {
             color: var(--text-muted);
-            font-size: 1.1rem;
+            font-size: 1rem;
         }
 
         /* --- CONTROLS --- */
         .controls-wrapper {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             background: var(--card-bg);
             padding: 20px;
             border-radius: 16px;
@@ -71,7 +113,7 @@
         }
 
         label {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
             color: var(--text-muted);
             text-transform: uppercase;
@@ -114,6 +156,7 @@
             align-items: center;
             user-select: none;
             min-height: 44px;
+            transition: border-color 0.2s;
         }
 
         .select-header::after {
@@ -121,6 +164,11 @@
             font-size: 0.7rem;
             color: var(--text-muted);
             margin-left: 10px;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .select-header.active::after {
+            transform: rotate(180deg);
         }
 
         .select-options {
@@ -129,19 +177,29 @@
             left: 0;
             right: 0;
             background: var(--card-bg);
-            border: 1px solid var(--border);
             border-radius: 10px;
             margin-top: 6px;
-            max-height: 250px;
-            overflow-y: auto;
             z-index: 100;
-            display: none;
             box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            padding: 8px 0;
+            
+            visibility: hidden;
+            opacity: 0;
+            max-height: 0;
+            padding: 0;
+            border: 1px solid transparent;
+            transform: translateY(-10px);
+            overflow-y: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .select-options.show {
-            display: block;
+            visibility: visible;
+            opacity: 1;
+            max-height: 250px;
+            padding: 8px 0;
+            border-color: var(--border);
+            transform: translateY(0);
+            overflow-y: auto;
         }
 
         .checkbox-label {
@@ -163,6 +221,62 @@
             accent-color: var(--accent);
             width: 16px;
             height: 16px;
+        }
+
+        /* --- COLLAPSIBLE GLOSSARY --- */
+        .glossary-container {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px 24px;
+            border: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .glossary-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .glossary-title span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glossary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 12px;
+            
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            margin-top: 0;
+            padding-top: 0;
+            border-top: 1px solid transparent;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glossary-grid.open {
+            max-height: 600px;
+            opacity: 1;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top-color: var(--border);
+        }
+
+        .glossary-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
         }
 
         /* --- ACTION BUTTONS --- */
@@ -196,16 +310,16 @@
             border: 1px solid var(--border);
             overflow-x: auto;
             margin-bottom: 2rem;
+            width: 100%;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 600px;
         }
 
         th, td {
-            padding: 16px 24px;
+            padding: 16px 20px;
             text-align: left;
             border-bottom: 1px solid var(--border);
             vertical-align: middle;
@@ -219,6 +333,11 @@
             letter-spacing: 0.05em;
             background-color: #fafafa;
         }
+
+        th:first-child { border-top-left-radius: 16px; }
+        th:last-child { border-top-right-radius: 16px; }
+
+        tr:last-child td { border-bottom: none; }
 
         td {
             font-size: 0.95rem;
@@ -262,37 +381,93 @@
             font-size: 1.1rem;
         }
 
-        /* --- GLOSSARY / LEGEND --- */
-        .glossary-container {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 24px;
-            border: 1px solid var(--border);
-        }
+        /* --- MOBILE RESPONSIVENESS --- */
+        @media screen and (max-width: 768px) {
+            .controls-wrapper {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
 
-        .glossary-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: var(--text-main);
-        }
+            .table-container {
+                background: transparent;
+                border: none;
+                box-shadow: none;
+            }
 
-        .glossary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 12px;
-        }
+            table, thead, tbody, th, td, tr { 
+                display: block; 
+            }
+            
+            thead tr { 
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+            
+            tr { 
+                background: var(--card-bg);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                margin-bottom: 1rem;
+                padding: 8px 16px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+            }
+            
+            td { 
+                border: none;
+                border-bottom: 1px solid #f0f0f0; 
+                position: relative;
+                padding: 12px 0 12px 40%; 
+                min-height: 45px;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                text-align: right;
+            }
 
-        .glossary-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.9rem;
-            color: var(--text-muted);
+            td:last-child {
+                border-bottom: 0;
+            }
+            
+            td::before { 
+                content: attr(data-label);
+                position: absolute;
+                left: 0;
+                top: 14px;
+                width: 35%; 
+                font-weight: 600;
+                font-size: 0.75rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: var(--text-muted);
+                text-align: left;
+            }
+
+            .badges-wrapper {
+                justify-content: flex-end;
+            }
+
+            td.status-message {
+                padding: 2rem 1rem;
+                justify-content: center;
+                text-align: center;
+            }
+            td.status-message::before {
+                display: none;
+            }
+
+            .glossary-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
+
+    <div id="pageLoader">
+        <div class="spinner"></div>
+        <div class="loader-text">Loading Records...</div>
+    </div>
 
     <div class="container">
         <header>
@@ -331,12 +506,11 @@
             </div>
         </div>
 
-        <div class="actions-row">
-            <button class="clear-btn" id="clearBtn">Clear All Filters</button>
-        </div>
-<div class="glossary-container">
-            <div class="glossary-title">Offer Type Glossary</div>
-            <div class="glossary-grid">
+        <div class="glossary-container">
+            <div class="glossary-title" onclick="toggleGlossary()">
+                Offer Type Glossary <span id="glossary-icon">▼</span>
+            </div>
+            <div class="glossary-grid" id="glossaryGrid">
                 <div class="glossary-item"><span class="offer-badge">MT</span> Management Trainee</div>
                 <div class="glossary-item"><span class="offer-badge">OCLD</span> Oberoi Centre of Learning & Development</div>
                 <div class="glossary-item"><span class="offer-badge">EDP</span> Executive Development Program</div>
@@ -348,7 +522,10 @@
             </div>
         </div>
 
-    </div>
+        <div class="actions-row">
+            <button class="clear-btn" id="clearBtn">Clear All Filters</button>
+        </div>
+
         <div class="table-container">
             <table>
                 <thead>
@@ -360,17 +537,13 @@
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr><td colspan="4" class="status-message">Loading records...</td></tr>
-                </tbody>
+                    </tbody>
             </table>
         </div>
 
-        
+    </div>
 
     <script>
-        // ==========================================
-        // PASTE YOUR PUBLISHED GOOGLE SHEET CSV LINK HERE
-        // ==========================================
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQUK_5llgm5vi5NBpZitS-wcxBAmyHfDbp909ReD-iCAfaBrb_eXA-6hVMypDDm3KQcOCr52cRt5946/pub?output=csv';
 
         let allData = [];
@@ -425,6 +598,11 @@
 
             } catch (error) {
                 document.getElementById('tableBody').innerHTML = '<tr><td colspan="4" class="status-message" style="color:red;">Error loading data. Check CSV link.</td></tr>';
+            } finally {
+                // HIDE LOADER ONCE EVERYTHING IS READY
+                setTimeout(() => {
+                    document.getElementById('pageLoader').classList.add('hidden');
+                }, 400); // 400ms delay ensures UI is painted smoothly before fading out
             }
         }
 
@@ -455,14 +633,22 @@
 
         function toggleDropdown(id) {
             document.querySelectorAll('.select-options').forEach(el => {
-                if (el.id !== id) el.classList.remove('show');
+                if (el.id !== id) {
+                    el.classList.remove('show');
+                    el.previousElementSibling.classList.remove('active');
+                }
             });
-            document.getElementById(id).classList.toggle('show');
+            const target = document.getElementById(id);
+            target.classList.toggle('show');
+            target.previousElementSibling.classList.toggle('active');
         }
 
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.multi-select')) {
-                document.querySelectorAll('.select-options').forEach(el => el.classList.remove('show'));
+                document.querySelectorAll('.select-options').forEach(el => {
+                    el.classList.remove('show');
+                    el.previousElementSibling.classList.remove('active');
+                });
             }
         });
 
@@ -513,29 +699,33 @@
 
                 tableBody.innerHTML += `
                     <tr>
-                        <td>${item.year}</td>
-                        <td class="student-name">${item.name}</td>
-                        <td><div class="badges-wrapper">${brandBadges}</div></td>
-                        <td><div class="badges-wrapper">${offerBadges}</div></td>
+                        <td data-label="Year">${item.year}</td>
+                        <td data-label="Student Name" class="student-name">${item.name}</td>
+                        <td data-label="Brand Selected For"><div class="badges-wrapper">${brandBadges}</div></td>
+                        <td data-label="Position / Offer"><div class="badges-wrapper">${offerBadges}</div></td>
                     </tr>
                 `;
             });
         }
 
-        // --- CLEAR FILTERS LOGIC ---
+        function toggleGlossary() {
+            const grid = document.getElementById('glossaryGrid');
+            const icon = document.getElementById('glossary-icon');
+            
+            grid.classList.toggle('open');
+            if (grid.classList.contains('open')) {
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
         document.getElementById('clearBtn').addEventListener('click', () => {
-            // Clear Search
             document.getElementById('searchInput').value = '';
-            
-            // Uncheck all checkboxes
             document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
-            
-            // Reset Dropdown Headers
             document.getElementById('yearOptions').previousElementSibling.innerHTML = 'All Years';
             document.getElementById('brandOptions').previousElementSibling.innerHTML = 'All Brands';
             document.getElementById('offerOptions').previousElementSibling.innerHTML = 'All Offers';
-            
-            // Re-render full table
             renderTable();
         });
 
